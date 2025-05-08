@@ -1,10 +1,9 @@
 PROG=main.java
 CLASS=main.class
-ARG0=assignment.txt
 
-all: clean $(PROG) $(ARG0)
+all: clean $(PROG)
 	javac $(PROG)
-	java $(PROG) $(ARG0)
+	java $(PROG)
 
 .PHONY: clean
 
