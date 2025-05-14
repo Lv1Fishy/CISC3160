@@ -1,12 +1,13 @@
-PROG=main.java
-CLASS=main.class
+PROG=program.java
+CLASS=program.class
+#FILE=program.txt
+FILE=custom.txt
 
-all: clean $(PROG)
+all: clean $(PROG) $(FILE)
 	javac $(PROG)
-	java $(PROG)
+	java $(PROG) $(FILE)
 
 .PHONY: clean
 
 clean: $(CLASS)
-	rm -f $(CLASS)
-
+	- rm -rf $(CLASS)
