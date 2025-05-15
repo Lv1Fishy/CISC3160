@@ -3,8 +3,6 @@ import java.io.*;
 import java.util.*;
 import java.util.regex.*;
 
-
-
 public class program {
 
     //Global variable
@@ -23,9 +21,6 @@ public class program {
             while (input.hasNextLine()) { 
                 String str = input.nextLine(); // Read each line from the input file
                 parseLines.add(str);
-
-                //System.out.println(str);
-
             }
 
             Program(parseLines); // Begin parsing the assignment statements
@@ -52,8 +47,9 @@ public class program {
             return; // Exit the method
         }
         List<String> assignmentLines = new ArrayList<>(); // List to parse lines until empty line
+
         for (String line : parseLines) { // Iterate through each line from the input file
-            //System.out.println(line);
+
             if(line.isEmpty()) { // Once an empty line is encountered, proceed to parse the sub-program lines
                 Assignment(assignmentLines); // Send the sub-program lines to the Assignment method for parsing
                 assignmentLines.clear(); // Clear the list to reset for the next sub-program
@@ -84,23 +80,24 @@ public class program {
         System.out.println();
         try{
             for (String line : assignmentLines) { // Iterate through each line from the sub-program lines
-                if(line.endsWith(";")){
-                    line = line.substring(0, line.length() - 1); // Remove the semicolon at the end of the line
 
-                    if(line.contains("=")){
+                if(line.endsWith(";")){ // Check if code ends with semicolon
+
+                    line = line.substring(0, line.length() - 1); // Remove the semicolon at the end of the line
+                    if(line.contains("=")){ // Check if there is an assignment statement
+
                         String[] token = line.split("="); // Split the line into two parts: variable name and expression
-                        
                         if(token.length != 2){
-                            // If the line does not have a variable name/expression or contains multiple =, break
+                            // If the line does not have a variable name/expression or contains multiple assignment statements, break
                             variables.clear();
-                            break;
+                            break; //break out of for loop
                         }
-                        if (Identifier(token[0].trim())) {
-                            if(!variables.containsKey(token[0].trim())){
-                                int value = Exp(token[1].trim());
+                        if (Identifier(token[0].trim())) { //check for valid variable identifier
+                            if(!variables.containsKey(token[0].trim())){ //check if the hashmap does not contains a existing variable
+                                int value = Exp(token[1].trim()); 
                                 variables.put(token[0].trim(), value); // Store the variable and its value
                             }
-                            else{
+                            else{ // If it does contain an existing variable, replace that variable's data
                                 int value = Exp(token[1].trim());
                                 variables.replace(token[0].trim(), value);
                             }                            
@@ -108,37 +105,44 @@ public class program {
                     }
                 }
                 else{
-                    // If the line does not end with a semicolon, break
+                    // If the line does not end with a semicolon, break the forloop
                     variables.clear();
                     break;
                 }
             }
         }
-        catch(IllegalArgumentException e){
+        catch(IllegalArgumentException e){ //handles error exceptions from expressions
             variables.clear();
         }
 
+        //If variables exists in the Hashmap, print out the hashmap's key and its value
         if(!variables.isEmpty()){
             System.out.println("Output:");
             for (String key : variables.keySet()) {
                 System.out.println(key + " = " + variables.get(key));
             }
         }
-        else{
+        else{ //if there is no variables in the hashmap, then there is an error. i.e. error detected, no variables have no value, etc.
             System.out.println("Output:");
             System.out.println("error");
         }
         System.out.println();
-        variables.clear();
+        variables.clear(); //reset for next assignment statements.
     }
 
 
 
-
+    /******************************************************************************************************
+     * Exp() - handles expression statements
+     * Exp -> Exp + Term | Exp - Term | Term
+     * It handles binary operations such as + and - by recursive calls 
+     * Also handles if the expression contains parenthesis so that it can ignore the expression inside it 
+     * once all the binary operations is done, move to Term()
+     ******************************************************************************************************/
     public static int Exp(String exp){
         int depth = 0;
         for(int i = 0; i < exp.length(); i++){
-            //checks if the expression is not contained within the parenthesis
+            //checks if the expression is contained within the parenthesis
             if(exp.charAt(i) == '('){
                 depth++; //if there is an opening parenthesis, add one to depth to avoid pattern matching + or -
             }
@@ -148,17 +152,17 @@ public class program {
             else if (depth == 0 && (String.valueOf(exp.charAt(i)).matches("[+-]"))){
                 //checks if the previous character does not contain -, +, *, or if it does not exist
                 //e.g. x = y+z will get tokenized, x = -y will not get tokenized and will proceed to Term(Fact("-y"))
-                if(i > 0 && exp.charAt(i) == '+') {
-                    if(!(String.valueOf(exp.charAt(i-1)).matches("[*+-]"))) {
-                        String left = exp.substring(0,i); 
-                        String right = exp.substring(i+1); 
+                if(i > 0 && exp.charAt(i) == '+') { //check if the operation is + and not the first index to avoid unary +
+                    if(!(String.valueOf(exp.charAt(i-1)).matches("[*+-]"))) { //check if previous character does not contain any operations
+                        String left = exp.substring(0,i); //left recursion
+                        String right = exp.substring(i+1); //right recursion
                         return Exp(left) + Exp(right);
                     }
                 }
-                else if(i > 0 && exp.charAt(i) == '-'){
-                    if(!(String.valueOf(exp.charAt(i-1)).matches("[*+-]"))) {
-                        String left = exp.substring(0,i); 
-                        String right = exp.substring(i+1); 
+                else if(i > 0 && exp.charAt(i) == '-'){ //check if the operation is - and not the first index to avoid unary -
+                    if(!(String.valueOf(exp.charAt(i-1)).matches("[*+-]"))) { //check if previous character does not contain any operations
+                        String left = exp.substring(0,i); //left recursion
+                        String right = exp.substring(i+1); //right recursion
                         return Exp(left) - Exp(right);
                     }
                 }
@@ -170,41 +174,64 @@ public class program {
     
 
 
-
-
+    /**********************************************************************************************
+     * Term() - handles multiplication operation
+     * Term -> Term * Fact  | Fact
+     * This method also handles parenthesis to make sure it doesn't matches the multiplication inside it
+     * It also checks if there is no consecutive * 
+     * Once all of the terms are handled, move to Fact()
+     **********************************************************************************************/
     public static int Term(String term){
         int depth = 0;
         for(int i = 0; i < term.length(); i++){
+            //checks if the expression is contained within the parenthesis
             if(term.charAt(i) == '('){
-                depth++;
+                depth++; //if there is an opening parenthesis, add one to depth to avoid pattern matching *
             }
             else if(term.charAt(i) == ')'){
-                depth--;
+                depth--; //once a closing parenthesis is found, allow for pattern matching
             }
             else if (depth == 0 && (term.charAt(i) == '*')) {
-                if(i == 0){
+                if(i == 0){ //if beginning char start with *, throw exception since there is no unary *
                     throw new IllegalArgumentException();
                 }
-                String left = term.substring(0, i);
-                String right = term.substring(i+1);
+                String left = term.substring(0, i); //left recursion
+                String right = term.substring(i+1); //right recursion
                 return Term(left) * Term(right);         
             }
         }
+        // If no more * is found, move to Fact()
         return Fact(term);
     }
 
 
 
-
+    /*
+     * Fact() - Handles parenthesis, unary operations - and +, literals, and identifiers
+     * Fact -> ( Exp ) | - Fact | + Fact | Literal | Identifier
+     * This method first checks for unary operations
+     * It Recurses if the first character of the string contains the unary operations 
+     * Once there is no more unary operations to check for, start checking for any parenthesis
+     * Handle any unbalanced parenthesis, if there is an unbalanced amount, throw an exception.
+     * Otherwise, call back to Exp() with the outer parenthesis stripped.
+     * If there is no more Unary operations and parenthesis, check if the string is Literal or an Identifier.
+     * If the identifier is valid, check if there is an existing identifier in the Hashmap. If there's none, throw an Exception
+     * If there is an existing identifier, return that identifier's value
+     * Check if the string is a literal. If it's not, throw an exception.
+     * Otherwise, return an int value that is converted from string to int
+     */
     public static int Fact(String fact){
-        if(fact.startsWith("+")){
-            return Fact(fact.substring(1));
+        if(fact.startsWith("+")){ //check for unary +
+            //unary + does nothing. If x = +(-5), x will still be -5
+            return Fact(fact.substring(1)); 
         }
-        else if(fact.startsWith("-")) {
+        else if(fact.startsWith("-")) { //check for unary -
+            //unary - switches the value from positive to negative and vice versa
             return -Fact(fact.substring(1));
         }
-        else if(fact.startsWith("(") && fact.endsWith(")")){
+        else if(fact.startsWith("(") && fact.endsWith(")")){ //check if the parenthesis begins with ( and ends with )
             int depth = 0;
+            //handles if parenthesis is balanced
             for (int i = 0; i < fact.length(); i++) {
                 if(fact.charAt(i) == '('){
                     depth++;
@@ -213,39 +240,39 @@ public class program {
                     depth--;
                 }
             }
-            if(depth != 0) {
+            if(depth != 0) { //if not balanced, throw an exception
                 throw new IllegalArgumentException();
             }
+            //otherwise, return the Exp() with the expression inside the parenthesis
             return Exp(fact.substring(1, fact.length()-1));
         }
-        else if(Identifier(fact)) {
-            if (variables.containsKey(fact)) {
-                return variables.get(fact);
+        else if(Identifier(fact)) { //checks if string is a variable
+            if (variables.containsKey(fact)) { //checks if the variable exists in the hashmap
+                return variables.get(fact); //return the variable's value
             }
-            else{
+            else{ //if no variable exists in the hashmap, throw an exception
                 throw new IllegalArgumentException();
             }
         }
-        else if (!Literal(fact)){
-            throw new IllegalArgumentException();   
+        else if (!Literal(fact)){ //checks if string is a valid Literal
+            throw new IllegalArgumentException(); //throw exception if not
         }
-        return Integer.parseInt(fact); 
+        return Integer.parseInt(fact); //otherwise, return the converted string to int's value
     }
-    
 
 
 
-    /*
+    /*******************************************************************
      * Identifier() - Identifies the variable name
      * This method checks the first character of the variable name
      * The variable name should not start with a digit
-     */
-
+     *******************************************************************/
     public static boolean Identifier(String token){
         token = token.trim(); // Remove leading and trailing whitespace
         if(!Letter(token.charAt(0))){ // Checks if the first character is not a letter
             return false; // Return false
         }
+        //loop through the string
         for(int i = 1; i < token.length(); i++){
             if(!(Letter(token.charAt(i)) || Digit(token.charAt(i)))) { // Check if the character is a letter or digit
                 return false;
@@ -256,14 +283,24 @@ public class program {
 
 
 
-
+    /*****************************************************************************
+     * Letter() - handles pattern matching for variable names
+     * Letter -> a|...|z|A|...|Z|_
+     * Return true if char is a lowercase, uppercase character, or an underscore
+     * Return false if otherwise 
+     *****************************************************************************/
     public static boolean Letter(char letter){
         return Pattern.matches("^[a-zA-Z_]$", String.valueOf(letter));
     }
 
 
 
-
+    /******************************************************************************************************************
+     * Literal() - handles any zero or non-leading zero integer
+     * Literal -> 0 | NonZeroDigit Digit*
+     * Returns true if the string is only 0 or non-leading zero integer
+     * Returns false if there are leading 0 in the beginning of the string or if the string contains any characters
+     ******************************************************************************************************************/
     public static boolean Literal(String literal){
         if(literal.equals("0")) {
             return true; // Valid literal for zero
@@ -286,96 +323,23 @@ public class program {
 
 
 
-
+    /*****************************************************************
+     * NonZeroDigit() - handles any non-zero digit
+     * NonZeroDigit -> 1|...|9
+     * Returns true if character is from 1 to 9, false if otherwise
+     *****************************************************************/
     public static boolean NonZeroDigit(char nonZero){
         return Pattern.matches("^[1-9]$", String.valueOf(nonZero));
     }
 
 
 
-
+    /******************************************************************
+     * Digit() - handles any digits
+     * Digit -> 0|1|...|9
+     * Returns true if character is from 0 to 9, false if otherwise
+     ******************************************************************/
     public static boolean Digit(char digit) {
         return Pattern.matches("^[0-9]$", String.valueOf(digit));
     }
-    
 }
-
-
-
-
-/*********************************************************************************************************************************************
- *          Assignment:
- * The following defines a simple language, in which a program consists of assignments and each variable is assumed to be of the integer type. 
- * For the sake of simplicity, only operators that give integer values are included. 
- * Write an interpreter for the language in a language of your choice. 
- * Your interpreter should be able to do the following for a given program: 
- * (1) detect syntax errors; 
- * (2) report uninitialized variables; and 
- * (3) perform the assignments if there is no error and print out the values of all the variables after all the assignments are done.
- **********************************************************************************************************************************************/
-
- /*
-    Program:
-       Assignment*
-
-    Assignment:
-        Identifier = Exp;
-
-    Exp: 
-        Exp + Term | Exp - Term | Term
-
-    Term:
-        Term * Fact  | Fact
-
-    Fact:
-        ( Exp ) | - Fact | + Fact | Literal | Identifier
-
-    Identifier:
-            Letter [Letter | Digit]*
-
-    Letter:
-        a|...|z|A|...|Z|_
-
-    Literal:
-        0 | NonZeroDigit Digit*
-            
-    NonZeroDigit:
-        1|...|9
-
-    Digit:
-        0|1|...|9
-  */
-
-  /*
-    Sample Input and Output:
-
-    Input 1
-    x = 001;
-
-    Output 1
-    error
-
-    Input 2
-    x_2 = 0;
-
-    Output 2
-    x_2 = 0
-
-    Input 3
-    x = 0
-    y = x;
-    z = ---(x+y);
-
-    Output 3
-    error
-
-    Input 4
-    x = 1;
-    y = 2;
-    z = ---(x+y)*(x+-y);
-
-    Output 4
-    x = 1
-    y = 2
-    z = 3
-   */
