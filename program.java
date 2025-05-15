@@ -1,7 +1,7 @@
 
+import java.io.*;
 import java.util.*;
 import java.util.regex.*;
-import java.io.*;
 
 
 
@@ -53,20 +53,12 @@ public class program {
         }
         List<String> assignmentLines = new ArrayList<>(); // List to parse lines until empty line
         for (String line : parseLines) { // Iterate through each line from the input file
-
             //System.out.println(line);
-
             if(line.isEmpty()) { // Once an empty line is encountered, proceed to parse the sub-program lines
-                
-                //System.out.println("Foo");
-
                 Assignment(assignmentLines); // Send the sub-program lines to the Assignment method for parsing
                 assignmentLines.clear(); // Clear the list to reset for the next sub-program
             }
             else{
-
-                //System.out.println("hello");
-
                 assignmentLines.add(line); 
             }
 
@@ -85,114 +77,159 @@ public class program {
         if(assignmentLines.isEmpty()) {
             return; // Exit the method
         }
-        for (String line : assignmentLines) { // Iterate through each line from the sub-program lines
-            if(line.endsWith(";")){
-                line = line.substring(0, line.length() - 1); // Remove the semicolon at the end of the line
+        System.out.println("Input:");
+        for(String line : assignmentLines) {
+            System.out.println(line);
+        }
+        System.out.println();
+        try{
+            for (String line : assignmentLines) { // Iterate through each line from the sub-program lines
+                if(line.endsWith(";")){
+                    line = line.substring(0, line.length() - 1); // Remove the semicolon at the end of the line
 
-                if(line.contains("=")){
-                    String[] token = line.split("="); // Split the line into two parts: variable name and expression
-                    
-                    if(token.length != 2){
-                        System.out.println("Missing variable/Expression Error"); // If the line does not have a variable name/expression, print error
-                        return; // Exit the method
-                    }
-                    //REQUIRE RECODE************************************************************** 
-                    
-                    if(Identifier(token[0].trim())){
-                        System.out.println(token[0].trim());
-                        if (variables.containsKey(token[0].trim())) {
-                            //variables.replace(token[0].trim(), Exp(token[1]));
+                    if(line.contains("=")){
+                        String[] token = line.split("="); // Split the line into two parts: variable name and expression
+                        
+                        if(token.length != 2){
+                            // If the line does not have a variable name/expression or contains multiple =, break
+                            variables.clear();
+                            break;
                         }
-                        else {
-                            //variables.put(token[0], token[1]); // Add the variable name and its value to the HashMap
+                        if (Identifier(token[0].trim())) {
+                            if(!variables.containsKey(token[0].trim())){
+                                int value = Exp(token[1].trim());
+                                variables.put(token[0].trim(), value); // Store the variable and its value
+                            }
+                            else{
+                                int value = Exp(token[1].trim());
+                                variables.replace(token[0].trim(), value);
+                            }                            
                         }
                     }
-                    //****************************************************************************
-                }
-            }
-            else{
-                System.out.println("Missing Semicolon Error"); // If the line does not end with a semicolon, print error
-                return; // Exit the method
-            }
-        }
-    }
-
-
-
-
-    public static void Exp(String exp){
-        if (exp.contains("+")) { // Check if the expression contains '+' or '-'
-            String[] token = exp.split("+", 2); // Split the expression into two parts at the first '+'
-            Exp(token[0]);
-            Exp(token[1]);
-        }
-        else if (exp.contains("-")) { // Check if the expression contains '-' or '+'
-            String[] token = exp.split("-", 2); // Split the expression into two parts at the first '-'
-            Exp(token[0]);
-            Exp(token[1]);
-        }
-        else{
-            Term(exp); // If no '+' or '-', call Term() method
-        }
-    }
-
-
-
-
-    public static void Term(String term){
-        if(term.contains("*")) { // Check if the term contains '*'
-            String[] token = term.split("\\*", 2); // Split the term into two parts at the first '*'
-            Term(token[0]);
-            Term(token[1]);
-        }
-        else{
-            Fact(term); // If no '*' or '/', call Fact() method
-        }
-    }
-
-
-
-
-    public static void Fact(String fact){
-        if(fact.contains("(")){
-            int startIndex = fact.indexOf("(")+1; // Find the index of the first '('
-            String subFact = fact.substring(startIndex); // Get the substring after the '('
-            if(subFact.contains(")")) {
-                int endIndex = subFact.indexOf(")"); // Find the index of the first ')'
-                String innerFact = subFact.substring(0, endIndex); // Get the substring between '(' and ')'
-                Exp(innerFact); // Call Fact() method with the inner fact
-            }
-            else{
-                System.out.println("Missing \")\" Error"); // If no ')' is found, print error
-                return;
-            }
-        }
-        else if(fact.contains("-")) { // Check if the fact contains '-'
-            String[] token = fact.split("-", 2); // Split the fact into two parts at the first '-'
-            Fact(token[0]); // Call Fact() method with the first part
-            Fact(token[1]); // Call Fact() method with the second part
-        }
-        else if(fact.contains("+")) { // Check if the fact contains '+'
-            String[] token = fact.split("\\+", 2); // Split the fact into two parts at the first '+'
-            Fact(token[0]); // Call Fact() method with the first part
-            Fact(token[1]); // Call Fact() method with the second part
-        }
-        else{
-            Literal(fact); // If no '+' or '-', call Literal() method
-            if(Identifier(fact)){
-                if(variables.containsKey(fact)){
-                    System.out.println(fact + " = " + variables.get(fact)); // Print the variable name and its value
                 }
                 else{
-                    System.out.println("error"); // If the variable is not found, print error
-                    return;
+                    // If the line does not end with a semicolon, break
+                    variables.clear();
+                    break;
                 }
             }
-            else{
-                System.out.println("error"); // If the fact is not a valid identifier, print error
-                return;
+        }
+        catch(IllegalArgumentException e){
+            variables.clear();
+        }
+
+        if(!variables.isEmpty()){
+            System.out.println("Output:");
+            for (String key : variables.keySet()) {
+                System.out.println(key + " = " + variables.get(key));
             }
         }
+        else{
+            System.out.println("Output:");
+            System.out.println("error");
+        }
+        System.out.println();
+        variables.clear();
+    }
+
+
+
+
+    public static int Exp(String exp){
+        int depth = 0;
+        for(int i = 0; i < exp.length(); i++){
+            //checks if the expression is not contained within the parenthesis
+            if(exp.charAt(i) == '('){
+                depth++; //if there is an opening parenthesis, add one to depth to avoid pattern matching + or -
+            }
+            else if (exp.charAt(i) == ')'){
+                depth--; //once a closing parenthesis is found, allow for pattern matching
+            }
+            else if (depth == 0 && (String.valueOf(exp.charAt(i)).matches("[+-]"))){
+                //checks if the previous character does not contain -, +, *, or if it does not exist
+                //e.g. x = y+z will get tokenized, x = -y will not get tokenized and will proceed to Term(Fact("-y"))
+                if(i > 0 && exp.charAt(i) == '+') {
+                    if(!(String.valueOf(exp.charAt(i-1)).matches("[*+-]"))) {
+                        String left = exp.substring(0,i); 
+                        String right = exp.substring(i+1); 
+                        return Exp(left) + Exp(right);
+                    }
+                }
+                else if(i > 0 && exp.charAt(i) == '-'){
+                    if(!(String.valueOf(exp.charAt(i-1)).matches("[*+-]"))) {
+                        String left = exp.substring(0,i); 
+                        String right = exp.substring(i+1); 
+                        return Exp(left) - Exp(right);
+                    }
+                }
+            } 
+        }
+        //if no more binary + or - is found, pass it to Term()
+        return Term(exp);
+    }
+    
+
+
+
+
+    public static int Term(String term){
+        int depth = 0;
+        for(int i = 0; i < term.length(); i++){
+            if(term.charAt(i) == '('){
+                depth++;
+            }
+            else if(term.charAt(i) == ')'){
+                depth--;
+            }
+            else if (depth == 0 && (term.charAt(i) == '*')) {
+                if(i == 0){
+                    throw new IllegalArgumentException();
+                }
+                String left = term.substring(0, i);
+                String right = term.substring(i+1);
+                return Term(left) * Term(right);         
+            }
+        }
+        return Fact(term);
+    }
+
+
+
+
+    public static int Fact(String fact){
+        if(fact.startsWith("+")){
+            return Fact(fact.substring(1));
+        }
+        else if(fact.startsWith("-")) {
+            return -Fact(fact.substring(1));
+        }
+        else if(fact.startsWith("(") && fact.endsWith(")")){
+            int depth = 0;
+            for (int i = 0; i < fact.length(); i++) {
+                if(fact.charAt(i) == '('){
+                    depth++;
+                }
+                else if (fact.charAt(i) == ')') {
+                    depth--;
+                }
+            }
+            if(depth != 0) {
+                throw new IllegalArgumentException();
+            }
+            return Exp(fact.substring(1, fact.length()-1));
+        }
+        else if(Identifier(fact)) {
+            if (variables.containsKey(fact)) {
+                return variables.get(fact);
+            }
+            else{
+                throw new IllegalArgumentException();
+            }
+        }
+        else if (!Literal(fact)){
+            throw new IllegalArgumentException();   
+        }
+        return Integer.parseInt(fact); 
     }
     
 
@@ -205,20 +242,12 @@ public class program {
      */
 
     public static boolean Identifier(String token){
-        //System.out.println("Identifier called?: " + token);
-        System.out.println(token.length());
-        token.trim(); // Remove leading and trailing whitespace
-        System.out.println(token.length());
-        if(!Letter(token.charAt(0))){
-            System.out.println("Beginning Variable Character Error"); // If the first character is not a letter, print error
-            return false; // Exit the method
+        token = token.trim(); // Remove leading and trailing whitespace
+        if(!Letter(token.charAt(0))){ // Checks if the first character is not a letter
+            return false; // Return false
         }
         for(int i = 1; i < token.length(); i++){
-
-            //System.out.println(!(Letter(token.charAt(i)) || Digit(token.charAt(i))));
-
             if(!(Letter(token.charAt(i)) || Digit(token.charAt(i)))) { // Check if the character is a letter or digit
-                System.out.println("Unknown Character Error");
                 return false;
             }
         }
@@ -229,62 +258,44 @@ public class program {
 
 
     public static boolean Letter(char letter){
-
-        //System.out.println(Pattern.matches("^[a-zA-Z_]$", String.valueOf(letter)) + " " + letter);
-
-        if(Pattern.matches("^[a-zA-Z_]$", String.valueOf(letter))) { // Check if the character is a letter or underscore
-            return true; 
-        } 
-        return false; 
+        return Pattern.matches("^[a-zA-Z_]$", String.valueOf(letter));
     }
 
 
 
 
-    public static void Literal(String literal){
+    public static boolean Literal(String literal){
         if(literal.equals("0")) {
-            return; // Valid literal for zero
-        } else if (literal.charAt(0) == '0') {
-            System.out.println("Leading Zero Error"); // Leading zeros are not allowed
-            return;
+            return true; // Valid literal for zero
+        } else if (literal.charAt(0) == '0' || literal.length() > 1) { // Leading zeros are not allowed
+            return false;
         }
         else if(NonZeroDigit(literal.charAt(0))) { // Check if the first character is a non-zero digit
             for(int i = 1; i < literal.length(); i++){
                 if(!Digit(literal.charAt(i))) { // Check if the character is a digit
-                    System.out.println(" Not a Digit Error"); // If not, print error
-                    return;
+                    return false;
                 }
             }
-
         }
         else{
-            System.out.println("Invalid Literal Error"); // If the literal is not valid, print error
-            return;
+            // If the literal starts with a character, print error
+            return false;
         }
-
+        return true; //String that starts with a non-zero and contains only leading digits
     }
 
 
 
 
     public static boolean NonZeroDigit(char nonZero){
-        if(Pattern.matches("^[1-9]$", String.valueOf(nonZero))) { // Check if the character is a non-zero digit (1-9)
-            return true;
-        }
-        return false;
+        return Pattern.matches("^[1-9]$", String.valueOf(nonZero));
     }
 
 
 
 
     public static boolean Digit(char digit) {
-
-        //System.out.println(Pattern.matches("^[0-9]$", String.valueOf(digit)) + " " + digit);
-
-        if(Pattern.matches("^[0-9]$", String.valueOf(digit))) { // Check if the character is a digit (0-9)
-            return true; 
-        }
-        return false;
+        return Pattern.matches("^[0-9]$", String.valueOf(digit));
     }
     
 }

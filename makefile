@@ -1,7 +1,6 @@
 PROG=program.java
 CLASS=program.class
-#FILE=program.txt
-FILE=custom.txt
+FILE=program.txt
 
 all: clean $(PROG) $(FILE)
 	javac $(PROG)
@@ -9,5 +8,5 @@ all: clean $(PROG) $(FILE)
 
 .PHONY: clean
 
-clean: $(CLASS)
-	- rm -rf $(CLASS)
+clean:
+	@if [ -f $(CLASS) ]; then rm -rf $(CLASS); fi
